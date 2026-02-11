@@ -20,10 +20,14 @@ class Config(object):
     FLASK_RUN_HOST                          = environ.get('FLASK_RUN_HOST') 
 
     # MONGODB VARIABLES
-    DB_USERNAME                             = environ.get('DB_USERNAME', 'root') 
-    DB_PASSWORD                             = environ.get('DB_PASSWORD', 'pass') 
-    DB_SERVER                               = environ.get('DB_SERVER', 'localhost') 
-    DB_PORT                                 = environ.get('DB_PORT', '27017') 
+    DB_USERNAME                             = environ.get('DB_USERNAME', 'root')
+    DB_PASSWORD                             = environ.get('DB_PASSWORD', 'pass')
+    DB_SERVER                               = environ.get('DB_SERVER', 'localhost')
+    DB_PORT                                 = environ.get('DB_PORT', '27017')
+    ALLOW_NOAUTH_DB                         = environ.get('ALLOW_NOAUTH_DB', '0')
+    DB_NAME                                 = environ.get('DB_NAME', 'ELET2415')
+    DB_AUTHSOURCE                           = environ.get('DB_AUTHSOURCE')
+    DB_TLS                                  = environ.get('DB_TLS', '0')
 
     PROPAGATE_EXCEPTIONS                    = False
  

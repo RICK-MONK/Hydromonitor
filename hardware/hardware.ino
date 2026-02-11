@@ -40,7 +40,7 @@
 #define DHTPIN     32
 #define DHTTYPE    DHT22
 
-// LED ARRAY (WS2812 / “LED module” = 7 addressable LEDs)
+// LED ARRAY (WS2812 / "LED module" = 7 addressable LEDs)
 #define LED_PIN     33
 #define NUM_LEDS    7
 
@@ -48,7 +48,7 @@
 #define LED_TYPE     WS2812B
 #define COLOR_ORDER  GRB
 
-// Default brightness (0–255). You can change this.
+// Default brightness (0-255). You can change this.
 static uint8_t gBrightness = 120;
 
 // MQTT CLIENT CONFIG  
@@ -61,7 +61,7 @@ static uint16_t mqtt_port        = 1883;
 // WIFI CREDENTIALS
 //const char* ssid       = "YOUR_SSID";     // Add your Wi-Fi ssid
 //const char* password   = "YOUR_PASSWORD"; // Add your Wi-Fi password 
-const char* ssid = "gadfa’s iPhone";           // Add your Wi-Fi ssid 
+const char* ssid = "gadfa's iPhone";           // Add your Wi-Fi ssid
 const char* password = "12345678";     // Add your Wi-Fi password
 
 // TASK HANDLES 
@@ -162,14 +162,33 @@ void vUpdate( void * pvParameters )  {
           // 2. Read temperature as Celsius and save in variable below
           double t = dht.readTemperature();    
 
+          Serial.print("[DHT22] T=");
+          Serial.print(t);
+          Serial.print(" C  H=");
+          Serial.print(h);
+          Serial.println(" %");
+          Serial.printf("[TS] now=%lu\n", (unsigned long)getTimeStamp());
+
+          if(!isNumber(t) || !isNumber(h)){
+              Serial.println("[DHT22] Failed to read (NaN). Check wiring / pull-up / delay.");
+              vTaskDelay(2000 / portTICK_PERIOD_MS);
+              continue;
+          }
+
           if(isNumber(t) && isNumber(h)){
               // ## Publish update according to:
-              // ‘{"id": "student_id", "timestamp": 1702212234, "temperature": 30, "humidity":90, "heatindex": 30}’
+              // '{"id": "student_id", "timestamp": 1702212234, "temperature": 30, "humidity":90, "heatindex": 30}'
               doc["id"] = "620169874";
-              doc["timestamp"] = (unsigned long)getTimeStamp();
+              unsigned long ts = (unsigned long)getTimeStamp();
+              if (ts < 1700000000UL || ts > 1800000000UL) {
+                Serial.println("[NTP] Time not valid yet, skipping publish...");
+                vTaskDelay(2000 / portTICK_PERIOD_MS);
+                continue;
+              }
+              doc["timestamp"] = ts;
               doc["temperature"] = t;
               doc["humidity"] = h;
-              doc["heatindex"] = calcHeatIndex(t, h);
+              doc["heatindex"] = convert_fahrenheit_to_Celsius(calcHeatIndex(t, h));
 
               serializeJson(doc, message);
 
@@ -286,31 +305,31 @@ bool publish(const char *topic, const char *payload){
 //***** Complete the util functions below ******
 
 double convert_Celsius_to_fahrenheit(double c){    
-    // CONVERTS INPUT FROM °C TO °F. RETURN RESULTS   
+    // CONVERTS INPUT FROM C TO F. RETURN RESULTS   
     return (c*9.0/5.0)+32.0;  
 }
 
 double convert_fahrenheit_to_Celsius(double f){    
-    // CONVERTS INPUT FROM °F TO °C. RETURN RESULT
+    // CONVERTS INPUT FROM F TO C. RETURN RESULT
     return (f-32.0)*5.0/9.0;    
 }
 
 double calcHeatIndex(double Temp, double Humid){
     // CALCULATE AND RETURN HEAT INDEX USING EQUATION FOUND AT https://byjus.com/heat-index-formula/#:~:text=The%20heat%20index%20formula%20is,an%20implied%20humidity%20of%2020%25
-    double c  = -42.379;
-    double c2 = -2.04901523;
-    double c3 = -10.14333127;
+    double c1 = -42.379;
+    double c2 =  2.04901523;
+    double c3 = 10.14333127;
     double c4 = -0.22475541;
-    double c5 = -6.83783  * 0.001;
-    double c6 = -5.481717 * 0.01;
-    double c7 = -1.22874  * 0.001;
-    double c8 =  8.5282   * 0.0001;
-    double c9 = -1.99     * 0.000001;
+    double c5 = -0.00683783;
+    double c6 = -0.05481717;
+    double c7 =  0.00122874;
+    double c8 =  0.00085282;
+    double c9 = -0.00000199;
 
     double temp = convert_Celsius_to_fahrenheit(Temp);
     double humid = Humid;
 
-    double HI = c + c2*temp + c3*humid + c4*temp*humid
+    double HI = c1 + c2*temp + c3*humid + c4*temp*humid
                 + c5*square(temp) + c6*square(humid)
                 + c7*square(temp)*humid
                 + c8*temp*square(humid)
@@ -321,7 +340,7 @@ double calcHeatIndex(double Temp, double Humid){
 }
 
 bool isNumber(double number){       
-    // A cleaner “is valid number” check for sensor reads
+    // A cleaner "is valid number" check for sensor reads
     return (!isnan(number) && !isinf(number));
 }
 

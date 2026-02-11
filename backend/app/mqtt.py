@@ -116,7 +116,7 @@ class MQTT:
             if ok:
                 print("MQTT:update -> saved to MongoDB (climo)")
             else:
-                print("MQTT:update -> NOT saved (maybe duplicate timestamp)")
+                print("MQTT:update -> NOT saved (see addUpdate error above)")
         except Exception as e:
             print(f"MQTT:update Error: {str(e)}")
 
