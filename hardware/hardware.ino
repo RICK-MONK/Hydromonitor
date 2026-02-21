@@ -1,4 +1,4 @@
-﻿//##################################################################################################################
+
 //##                                      ELET2415 DATA ACQUISITION SYSTEM CODE                                   ##
 //##                                                                                                              ##
 //##################################################################################################################
@@ -61,8 +61,8 @@ static uint16_t mqtt_port        = 1883;
 // WIFI CREDENTIALS
 //const char* ssid       = "YOUR_SSID";     // Add your Wi-Fi ssid
 //const char* password   = "YOUR_PASSWORD"; // Add your Wi-Fi password 
-const char* ssid = "MonaConnect";           // Add your Wi-Fi ssid
-const char* password = "";     // Add your Wi-Fi password
+const char* ssid = "gadfa’s iPhone";           // Add your Wi-Fi ssid
+const char* password = "12345678";     // Add your Wi-Fi password
 
 // TASK HANDLES 
 TaskHandle_t xMQTT_Connect          = NULL; 
@@ -192,8 +192,12 @@ void vUpdate( void * pvParameters )  {
 
               serializeJson(doc, message);
 
-              if(mqtt.connected()){
-                publish(pubtopic, message);
+              if (mqtt.connected()) {
+                Serial.printf("[PUB] topic=%s payload=%s\n", pubtopic, message);
+                bool ok = publish(pubtopic, message);
+                Serial.printf("[PUB] ok=%d\n", ok);
+              } else {
+                Serial.println("[MQTT] not connected, skipping publish");
               }
 
               // 1. Create JSon object

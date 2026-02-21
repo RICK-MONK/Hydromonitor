@@ -108,11 +108,17 @@ class DB:
         '''RETURNS A LIST OF OBJECTS. THAT FALLS WITHIN THE START AND END DATE RANGE'''
         try:
             remotedb 	= self.remoteMongo(self._mongo_uri(), tls=self.tls)
-            result      = list(remotedb.ELET2415.climo.find({"timestamp": {"$gte": start, "$lte": end}}, {"_id": 0}))
+            result      = list(
+                remotedb.ELET2415.climo.find(
+                    {"timestamp": {"$gte": start, "$lte": end}},
+                    {"_id": 0}
+                ).sort("timestamp", 1)
+            )
         except Exception as e:
             msg = str(e)
-            print("getAllInRange error ",msg)            
-        else:                  
+            print("getAllInRange error ",msg)
+            return []
+        else:
             return result
         
 
@@ -147,9 +153,10 @@ class DB:
             result      = list(remotedb.ELET2415.climo.aggregate(pipeline))
         except Exception as e:
             msg = str(e)
-            print("humidityMMAS error ",msg)            
-        else:                  
-            return result[0] if result else None
+            print("humidityMMAR error ",msg)
+            return []
+        else:
+            return result
         
     def temperatureMMAR(self,start, end):
         '''RETURNS MIN, MAX, AVG AND RANGE FOR TEMPERATURE. THAT FALLS WITHIN THE START AND END DATE RANGE'''
@@ -182,13 +189,19 @@ class DB:
             result      = list(remotedb.ELET2415.climo.aggregate(pipeline))
         except Exception as e:
             msg = str(e)
-            print("temperatureMMAS error ",msg)            
-        else:                  
-            return result[0] if result else None
+            print("temperatureMMAR error ",msg)
+            return []
+        else:
+            return result
 
 
     def frequencyDistro(self,variable,start, end):
         '''RETURNS THE FREQUENCY DISTROBUTION FOR A SPECIFIED VARIABLE WITHIN THE START AND END DATE RANGE'''
+        allowed = {"temperature", "humidity", "heatindex"}
+        if variable not in allowed:
+            return []
+
+        boundaries = list(range(0, 101))
         pipeline = [
             {
                 "$match": {
@@ -196,21 +209,18 @@ class DB:
                 }
             },
             {
-                "$group": {
-                    "_id": f"${variable}",
-                    "count": {"$sum": 1}
+                "$bucket": {
+                    "groupBy": f"${variable}",
+                    "boundaries": boundaries,
+                    "default": "outliers",
+                    "output": {
+                        "count": {"$sum": 1}
+                    }
                 }
             },
             {
                 "$sort": {
                     "_id": 1
-                }
-            },
-            {
-                "$project": {
-                    "_id": 0,
-                    variable: "$_id",
-                    "count": 1
                 }
             }
         ]
@@ -219,8 +229,9 @@ class DB:
             result      = list(remotedb.ELET2415.climo.aggregate(pipeline))
         except Exception as e:
             msg = str(e)
-            print("frequencyDistro error ",msg)            
-        else:                  
+            print("frequencyDistro error ",msg)
+            return []
+        else:
             return result
         
  

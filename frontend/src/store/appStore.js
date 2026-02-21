@@ -1,24 +1,70 @@
-import {defineStore} from 'pinia'
-import {ref} from 'vue'
+import { defineStore } from "pinia";
 
+export const useAppStore = defineStore(
+  "app",
+  () => {
+    const fetchJSON = async (url, timeoutMs = 20000) => {
+      const controller = new AbortController();
+      const signal = controller.signal;
+      const id = setTimeout(() => controller.abort(), timeoutMs);
 
-export const useAppStore =  defineStore('app', ()=>{
+      try {
+        const response = await fetch(url, { method: "GET", signal });
+        if (!response.ok) {
+          const text = await response.text();
+          console.log("API non-OK:", response.status, text);
+          return { status: "failed", data: [] };
+        }
 
-    /*  
-    The composition API way of defining a Pinia store
-    ref() s become state properties
-    computed() s become getters
-    function() s become actions  
-    */ 
+        const json = await response.json();
+        return json;
+      } catch (err) {
+        console.error("fetchJSON error:", err?.message || err);
+        return { status: "failed", data: [] };
+      } finally {
+        clearTimeout(id);
+      }
+    };
 
-    // STATES   
+    const unwrapData = (json) => {
+      if (!json || typeof json !== "object") return [];
+      const st = json.status;
+      if (st === "found" || st === "ok") {
+        return Array.isArray(json.data) ? json.data : [];
+      }
+      return [];
+    };
 
+    const getAllInRange = async (start, end) => {
+      const url = `/api/climo/get/${start}/${end}`;
+      const json = await fetchJSON(url, 60000);
+      return unwrapData(json);
+    };
 
-    // ACTIONS
-    
+    const getTemperatureMMAR = async (start, end) => {
+      const url = `/api/mmar/temperature/${start}/${end}`;
+      const json = await fetchJSON(url);
+      return unwrapData(json);
+    };
 
-    return { 
-    // EXPORTS	
-            
-       }
-},{ persist: true  });
+    const getHumidityMMAR = async (start, end) => {
+      const url = `/api/mmar/humidity/${start}/${end}`;
+      const json = await fetchJSON(url);
+      return unwrapData(json);
+    };
+
+    const getFreqDistro = async (variable, start, end) => {
+      const url = `/api/frequency/${variable}/${start}/${end}`;
+      const json = await fetchJSON(url, 60000);
+      return unwrapData(json);
+    };
+
+    return {
+      getAllInRange,
+      getTemperatureMMAR,
+      getHumidityMMAR,
+      getFreqDistro,
+    };
+  },
+  { persist: true }
+);

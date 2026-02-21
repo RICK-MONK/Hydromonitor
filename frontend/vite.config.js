@@ -49,11 +49,11 @@ export default defineConfig({
     port: 3000,
     host:true, 
     proxy: {
-      '^/api*': { 
-        target: 'http://localhost:8080/' ,
-       changeOrigin: false,
-    },   
-  }
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+    }
   },
   base:"/"
 })

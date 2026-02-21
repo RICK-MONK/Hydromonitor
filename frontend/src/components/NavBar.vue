@@ -15,6 +15,14 @@
                             <RouterLink class="route" :to="{ name: 'Control' }">
                                 <VBtn class="text-subtitle-2"   density="compact"   color="primary"  :variant="(route.name== 'Control')? 'tonal':'text'">Control</VBtn>
                             </RouterLink>
+
+                            <RouterLink class="route" :to="{ name: 'Live' }">
+                                <VBtn class="text-subtitle-2" density="compact" color="primary" :variant="(route.name== 'Live')? 'tonal':'text'">Live</VBtn>
+                            </RouterLink>
+
+                            <RouterLink class="route" :to="{ name: 'Analysis' }">
+                                <VBtn class="text-subtitle-2" density="compact" color="primary" :variant="(route.name== 'Analysis')? 'tonal':'text'">Analysis</VBtn>
+                            </RouterLink>
                             
 
                             <!-- Add Links Below -->
@@ -34,7 +42,7 @@
 
   
   <script setup>
-    import { useRoute,useRouter } from "vue-router";
+    import { useRoute } from "vue-router";
     import { useTheme } from 'vuetify';  
     import { ref ,watch ,onMounted ,onBeforeMount } from 'vue';
 
@@ -43,7 +51,6 @@
     // VARIABLES 
     const theme       = useTheme();
     const darkmode    = ref(false); 
-    const router      = useRouter();  
     const route       = useRoute();  
 
     // WATCHERS

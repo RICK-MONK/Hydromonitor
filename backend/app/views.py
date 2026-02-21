@@ -28,38 +28,32 @@ from math import floor
 @app.route('/api/climo/get/<start>/<end>', methods=['GET']) 
 def get_all(start,end):   
     '''RETURNS ALL THE DATA FROM THE DATABASE THAT EXIST IN BETWEEN THE START AND END TIMESTAMPS'''
-   
-    if request.method == "GET":
-        try:
-            start = int(start)
-            end = int(end)
-            data = mongo.getAllInRange(start, end)
-            if data:
-                return jsonify({"status":"ok", "data": data})
-        except Exception as e:
-            print(f"get_all error: {e}")
-
-    # FILE DATA NOT EXIST
-    return jsonify({"status":"not found","data":[]})
+    try:
+        start_ts = int(start)
+        end_ts = int(end)
+        data = mongo.getAllInRange(start_ts, end_ts)
+        if data:
+            return jsonify({"status":"found", "data": data}), 200
+        return jsonify({"status":"failed","data":[]}), 200
+    except Exception as e:
+        print(f"get_all error: {e}")
+        return jsonify({"status":"failed","data":[]}), 500
    
 
 
 @app.route('/api/mmar/temperature/<start>/<end>', methods=['GET']) 
 def get_temperature_mmar(start,end):   
     '''RETURNS MIN, MAX, AVG AND RANGE FOR TEMPERATURE. THAT FALLS WITHIN THE START AND END DATE RANGE'''
-   
-    if request.method == "GET": 
-        try:
-            start = int(start)
-            end = int(end)
-            data = mongo.temperatureMMAR(start, end)
-            if data:
-                return jsonify({"status":"ok", "data": data})
-        except Exception as e:
-            print(f"get_temperature_mmar error: {e}")
-
-    # FILE DATA NOT EXIST
-    return jsonify({"status":"not found","data":[]})
+    try:
+        start_ts = int(start)
+        end_ts = int(end)
+        data = mongo.temperatureMMAR(start_ts, end_ts)
+        if data:
+            return jsonify({"status":"found", "data": data}), 200
+        return jsonify({"status":"failed","data":[]}), 200
+    except Exception as e:
+        print(f"get_temperature_mmar error: {e}")
+        return jsonify({"status":"failed","data":[]}), 500
 
 
 
@@ -68,22 +62,16 @@ def get_temperature_mmar(start,end):
 @app.route('/api/mmar/humidity/<start>/<end>', methods=['GET']) 
 def get_humidity_mmar(start,end):   
     '''RETURNS MIN, MAX, AVG AND RANGE FOR HUMIDITY. THAT FALLS WITHIN THE START AND END DATE RANGE'''
-   
-    if request.method == "GET": 
-        try:
-            start_ts = int(start)
-            end_ts = int(end)
-        except ValueError:
-            return jsonify({"status":"invalid timestamps","data":[]}), 400
-
-        stats = mongo.humidityMMAR(start_ts, end_ts)
-        if not stats:
-            return jsonify({"status":"not found","data":[]}), 404
-
-        return jsonify({"status":"ok","data":stats})
-
-    # FILE DATA NOT EXIST
-    return jsonify({"status":"not found","data":[]})
+    try:
+        start_ts = int(start)
+        end_ts = int(end)
+        data = mongo.humidityMMAR(start_ts, end_ts)
+        if data:
+            return jsonify({"status":"found","data":data}), 200
+        return jsonify({"status":"failed","data":[]}), 200
+    except Exception as e:
+        print(f"get_humidity_mmar error: {e}")
+        return jsonify({"status":"failed","data":[]}), 500
 
 
 
@@ -92,19 +80,20 @@ def get_humidity_mmar(start,end):
 @app.route('/api/frequency/<variable>/<start>/<end>', methods=['GET']) 
 def get_freq_distro(variable,start,end):   
     '''RETURNS FREQUENCY DISTRIBUTION FOR SPECIFIED VARIABLE'''
-   
-    if request.method == "GET": 
-        try:
-            start = int(start)
-            end = int(end)
-            data = mongo.frequencyDistro(variable, start, end)
-            if data:
-                return jsonify({"status":"ok", "data": data})
-        except Exception as e:
-            print(f"get_freq_distro error: {e}")      
+    allowed = {"temperature", "humidity", "heatindex"}
+    if variable not in allowed:
+        return jsonify({"status":"invalid variable","data":[]}), 400
 
-    # FILE DATA NOT EXIST
-    return jsonify({"status":"not found","data":[]})
+    try:
+        start_ts = int(start)
+        end_ts = int(end)
+        data = mongo.frequencyDistro(variable, start_ts, end_ts)
+        if data:
+            return jsonify({"status":"found", "data": data}), 200
+        return jsonify({"status":"failed","data":[]}), 200
+    except Exception as e:
+        print(f"get_freq_distro error: {e}")
+        return jsonify({"status":"failed","data":[]}), 500
 
 
 
